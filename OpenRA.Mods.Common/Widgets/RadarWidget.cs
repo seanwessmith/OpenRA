@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using OpenRA.Graphics;
 using OpenRA.Mods.Common.Traits;
 using OpenRA.Primitives;
@@ -108,6 +109,12 @@ namespace OpenRA.Mods.Common.Widgets
 			// The four layers are stored in a 2x2 grid within a single texture
 			radarSheet = new Sheet(SheetType.BGRA, new Size(2 * previewWidth, 2 * previewHeight).NextPowerOf2());
 			radarData = radarSheet.GetData();
+
+			// Cells outside the projected map bounds never receive shroud updates.
+			// Cover the entire layer before revealing the playable cells.
+			var colors = MemoryMarshal.Cast<byte, uint>(radarData);
+			for (var y = 0; y < previewHeight; y++)
+				colors.Slice(y * radarSheet.Size.Width + previewWidth, previewWidth).Fill(ColorShroud);
 
 			MapBoundsChanged();
 
